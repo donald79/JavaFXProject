@@ -18,8 +18,17 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-
 import org.apache.commons.lang.time.StopWatch;
+
+
+
+
+
+
+
+
+
+
 
 public class Watch extends StopWatch {
 
@@ -79,6 +88,16 @@ public class Watch extends StopWatch {
     }
 
 }
+ // TIMELINE class 
+// http://www.java2s.com/Tutorials/Java/JavaFX/1010__JavaFX_Timeline_Animation.htm
+
+
+
+
+
+
+
+
 //
 //http://stackoverflow.com/questions/13227809/displaying-changing-values-in-javafx-label
 //
