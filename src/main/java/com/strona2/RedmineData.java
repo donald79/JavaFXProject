@@ -2,11 +2,13 @@ package com.strona2;
 
 import com.taskadapter.redmineapi.IssueManager;
 import com.taskadapter.redmineapi.NotFoundException;
+import com.taskadapter.redmineapi.ProjectManager;
 import com.taskadapter.redmineapi.RedmineAuthenticationException;
 import com.taskadapter.redmineapi.RedmineException;
 import com.taskadapter.redmineapi.RedmineManager;
 import com.taskadapter.redmineapi.RedmineManagerFactory;
 import com.taskadapter.redmineapi.bean.Issue;
+import com.taskadapter.redmineapi.bean.Project;
 import com.taskadapter.redmineapi.internal.Transport;
 import com.taskadapter.redmineapi.internal.URIConfigurator;
 import java.io.File;
@@ -37,6 +39,8 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContextBuilder;
 import com.taskadapter.redmineapi.internal.Transport;
 import com.taskadapter.redmineapi.internal.URIConfigurator;
+import com.taskadapter.redmineapi.internal.comm.redmine.RedmineAuthenticator;
+import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 // Library https://github.com/taskadapter/redmine-java-api
@@ -48,26 +52,52 @@ public class RedmineData {
     String projectKey = "ppm";
     Integer queryId = 12; // any before I set up query in Redmine --> id:12 (Search all)
     HttpClient httpClient;
-    RedmineManager mgr;
+    RedmineManager redmineManager;
     IssueManager issueManager;
+    ProjectManager projectManager;
     List<Issue> issues;
+    List<Project> listOfProjectsFromRedmine;
     Issue issue;
     String exceptionMessage;
+    boolean isLoginAndPasswordCorrect=false;
 
-    public RedmineData() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException, RedmineException {
+    public void logingIn(String login, String password) {
+        try {
+            exceptionMessage = "";
+            System.out.println("try: " + login + " " + password);          
+            httpClient = createHttpClient_AcceptsUntrustedCerts();
+//             mgr = RedmineManagerFactory.createWithApiKey(uri, apiAccessKey);
+//             mgr = RedmineManagerFactory.createWithApiKey(uri, apiAccessKey, httpClient);
 
-        httpClient = createHttpClient_AcceptsUntrustedCerts();
-        //    RedmineManager mgr = RedmineManagerFactory.createWithApiKey(uri, apiAccessKey);
-        mgr = RedmineManagerFactory.createWithApiKey(uri, apiAccessKey, httpClient);
-        issueManager = mgr.getIssueManager();
-        issues = issueManager.getIssues(projectKey, queryId);
+         redmineManager = RedmineManagerFactory.createWithUserAuth( uri,  "karol.kolanczak", "karolek79",  httpClient);     
+//            mgr = RedmineManagerFactory.createWithUserAuth(uri, login, password, httpClient);
 
+            issueManager = redmineManager.getIssueManager();
+            issues = issueManager.getIssues(projectKey, queryId);   
+            projectManager = redmineManager.getProjectManager();
+            listOfProjectsFromRedmine=projectManager.getProjects();
+            
+            isLoginAndPasswordCorrect=true;
+            System.out.println("login and password correct");
+          
+//            return issues;
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println("Inside class 'RedmineData': " + e);
+        } catch (KeyStoreException e) {
+            System.out.println("Inside class 'RedmineData': " + e);
+        } catch (KeyManagementException e) {
+            System.out.println("Inside class 'RedmineData': " + e);
+        } catch (RedmineAuthenticationException e) {
+            isLoginAndPasswordCorrect=false;
+            exceptionMessage = "Login or password is not correct";
+            System.out.println("Inside class 'RedmineData': " + e);
+            
+        } catch (RedmineException e) {
+            System.out.println("Inside class 'RedmineData': " + e);
+        }
+//        return null;
     }
 
-
-    
-    
-    
     // from author: of article: "How to ignore SSL certificate errors in Apache HttpClient 4.4"  
     // http://literatejava.com/networks/ignore-ssl-certificate-errors-apache-httpclient-4-4/
     public HttpClient createHttpClient_AcceptsUntrustedCerts() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
@@ -96,7 +126,11 @@ public class RedmineData {
         HttpClient httpClient = b.build();
         return httpClient;
     }
-
+     public List<Project> getProjectsFromRedmine(){           
+         System.out.println("22222"+listOfProjectsFromRedmine);
+            return listOfProjectsFromRedmine;
+      
+    }
     public void printAll(List<Issue> issues) {
         for (Issue issueValue : issues) {
             System.out.println(issueValue);
@@ -106,27 +140,23 @@ public class RedmineData {
     public List<Issue> getIssues() {
         return issues;
     }
+
     public Issue searchIssueById(int id) {
-        
+
         try {
-            
-                 exceptionMessage="";
-               return issueManager.getIssueById(id);
-           
+            exceptionMessage = "";
+            return issueManager.getIssueById(id);
+        } catch (RedmineAuthenticationException ex) {
+            exceptionMessage = "user has no proper permissions";
+            System.out.println("searchIssueById - RedmineAuthenticationException: " + ex);
+        } catch (NotFoundException ex) {
+            exceptionMessage = "id not found";
+            System.out.println("searchIssueById - NotFoundException: " + ex);
+        } catch (RedmineException ex) {
+            exceptionMessage = "user has no proper permissions";
+            System.out.println("searchIssueById - RedmineException: " + ex);
         }
-        catch (RedmineAuthenticationException  ex) {
-            exceptionMessage="user has no proper permissions";
-            System.out.println("searchIssueById - RedmineAuthenticationException: "+ex);
-        }
-        catch (NotFoundException ex) {
-            exceptionMessage="id not found";          
-            System.out.println("searchIssueById - NotFoundException: "+ex);
-        }
-        catch (RedmineException ex) {
-            exceptionMessage="user has no proper permissions";
-               System.out.println("searchIssueById - RedmineException: "+ex);
-            }
-      return null;
+        return null;
     }
 
     public Issue getIssue() {
@@ -140,9 +170,5 @@ public class RedmineData {
     public String getExceptionMessage() {
         return exceptionMessage;
     }
-   
-            
-            
-            
 
 }
