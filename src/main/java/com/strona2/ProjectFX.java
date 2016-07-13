@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import javafx.animation.*;
 import javafx.event.*;
 import javafx.scene.control.Label;
@@ -62,8 +63,10 @@ import java.util.Map;
 import javafx.application.Application;
 import javafx.beans.DefaultProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.control.ChoiceBox;
+
 import javafx.scene.control.Labeled;
 import javafx.scene.control.PasswordField;
 
@@ -272,12 +275,27 @@ public class ProjectFX extends Application {
         gridPaneTop.add(labelSelectProject, 0, 0, 2, 1);
        
          // column 0 row 1 
+         
+//https://www.youtube.com/watch?v=K3CenJ2bMok
 
-//    ChoiceBox choiceBoxSelectProject = new ChoiceBox(FXCollections.observableArrayList(redmineData.listOfProjects));
-System.out.println("!!!!!!!!!!!1111"+table);
-https://www.youtube.com/watch?v=K3CenJ2bMok
-           ChoiceBox choiceBoxSelectProject = new ChoiceBox(FXCollections.observableArrayList("1","2",listOfProjectsNames));
-            gridPaneTop.add(choiceBoxSelectProject,0,1);
+// https://www.youtube.com/watch?v=yLzfZhJTaa8
+
+
+ObservableList<List> observableList=FXCollections.observableArrayList();
+observableList.addAll(listOfProjectsNames);
+
+
+
+
+   ChoiceBox<String> choiceBox = new ChoiceBox<>();
+
+    
+       
+            for(List value: observableList){
+                  choiceBox.setItems(value);
+            }
+
+            gridPaneTop.add(choiceBox,0,1);
 
 //            
 //         
