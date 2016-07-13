@@ -53,7 +53,6 @@ import javafx.animation.*;
 import javafx.event.*;
 import javafx.scene.control.Label;
 import javafx.util.Duration;
-
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -63,11 +62,14 @@ import java.util.Map;
 import javafx.application.Application;
 import javafx.beans.DefaultProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
 import javafx.scene.Scene;
 import javafx.scene.control.ChoiceBox;
 
 import javafx.scene.control.Labeled;
+import javafx.scene.control.ListView;
 import javafx.scene.control.PasswordField;
 
 //https://dzone.com/articles/build-your-own-java-stopwatch
@@ -82,14 +84,15 @@ public class ProjectFX extends Application {
     BorderPane layoutMain;
     GridPane layoutLogin;
     GridPane gridPaneTop;
-    Label labelSelectProject,labelSearchbyId, labelTotalTimeTaken, labelId, labelSubject, labelTracker, labelStatus, labelAssignedTo, labelUpdated, labelEstimatedTime, labelSpentTime, labelTargetVersion;
+    Label labelSelectProject, labelSearchbyId, labelTotalTimeTaken, labelId, labelSubject, labelTracker, labelStatus, labelAssignedTo, labelUpdated, labelEstimatedTime, labelSpentTime, labelTargetVersion;
     Button buttonLogOut, buttonStart, buttonPause, buttonResume, buttonEnd, buttonSearchById, buttonSearchAll;
     TextField textFieldSearchById;
     Text textMessage, textSearchById, textId, textSubject, textTracker, textStatus, textAssignedTo, textUpdated, textEstimatedTime, textSpentTime, textTargetVersion;
     String tempTime;
     List<Project> listOfProjects;
     List<String> listOfProjectsNames;
-    String[] table={};
+    Map<Integer, String> mapOfProjectNames;
+    String[] table = {};
     boolean isPauseButtonAlreadyClicked = false;
     boolean isUserLoggedIn = false;
 
@@ -122,8 +125,9 @@ public class ProjectFX extends Application {
 //        buttonEnd.setMinSize(40, 30);
         buttonSearchById = new Button("search by Id");
         buttonSearchAll = new Button("search all");
-        listOfProjects=new ArrayList<>();
-        listOfProjectsNames=new ArrayList<>();
+        listOfProjects = new ArrayList<>();
+        listOfProjectsNames = new ArrayList<>();
+        mapOfProjectNames = new HashMap();
 
         buttonStart.setOnAction(e -> clickButtonAction(e));
         buttonPause.setOnAction(e -> clickButtonAction(e));
@@ -132,7 +136,7 @@ public class ProjectFX extends Application {
         buttonSearchAll.setOnAction(e -> clickButtonAction(e));
         buttonSearchById.setOnAction(e -> clickButtonAction(e));
         buttonLogOut.setOnAction(e -> clickButtonAction(e));
-        
+
         textId = new Text(null);
         textSubject = new Text(null);
         textTracker = new Text(null);
@@ -170,36 +174,29 @@ public class ProjectFX extends Application {
         layoutLoginButton.getChildren().add(buttonSignIn);
         layoutLogin.add(layoutLoginButton, 1, 4);
         layoutLogin.add(textMessage, 0, 5);
-        
+
         buttonSignIn.setOnAction(e -> {
             textMessage.setText(null);
             redmineData.logingIn(login.getText(), passwordField.getText());
             textMessage.setText(redmineData.getExceptionMessage());
-            if (redmineData.isLoginAndPasswordCorrect == true ) {
-                
-                
-                listOfProjects=redmineData.getProjectsFromRedmine();
-                                   
-                  for( Project value: listOfProjects){
-                    System.out.println("value.getName(): "+value.getName());
-                     listOfProjectsNames.add(value.getName());
+            if (redmineData.isLoginAndPasswordCorrect == true) {
+
+                listOfProjects = redmineData.getProjectsFromRedmine();
+                for (Project value : listOfProjects) {
+                    listOfProjectsNames.add(value.getName());
                 }
-                  table=listOfProjectsNames.toArray(table);
-                  
-                      System.out.println("==========================="+listOfProjectsNames);
-                   window.setScene(sceneMain);
-                   
+
+//                table = listOfProjectsNames.toArray(table);
+                sceneMain = new Scene(layoutMain, 350, 600);
+                window.setScene(sceneMain);
             }
-            
         });
 
-        sceneMain = new Scene(layoutMain, 350, 600);
         sceneLogin = new Scene(layoutLogin, 350, 600);
 //        window.setScene(sceneMain);
         window.setScene(sceneLogin);
         window.setTitle(windowTitle);
         window.show();
-
     }
 
     public void clickButtonAction(ActionEvent event) {
@@ -244,17 +241,16 @@ public class ProjectFX extends Application {
             System.out.println("time - resumed: " + watch.getActualspentTime());
             isPauseButtonAlreadyClicked = false;
 //            refreshWindow();
-            
+
         } else if (button.equals(buttonEnd)) {
             try {
                 watch.end();
             } catch (IllegalStateException e) {
                 System.out.println("from 'buttonEnd': " + e);
             }
-        }
-        else if(button.equals(buttonLogOut)){
-                 redmineData.logingIn(null, null);
-                 if (redmineData.isLoginAndPasswordCorrect == false) {
+        } else if (button.equals(buttonLogOut)) {
+            redmineData.logingIn(null, null);
+            if (redmineData.isLoginAndPasswordCorrect == false) {
                 window.setScene(sceneLogin);
             }
         }
@@ -268,39 +264,26 @@ public class ProjectFX extends Application {
         gridPaneTop.setVgap(5);
         gridPaneTop.setPadding(new Insets(10, 10, 10, 10));
 
-        
         // column 0-2 row 0  
-        labelSelectProject=new Label ("Select Project");
+        labelSelectProject = new Label("Select Project");
         labelSelectProject.setFont(Font.font("Tahoma", FontWeight.BOLD, 12));
         gridPaneTop.add(labelSelectProject, 0, 0, 2, 1);
-       
-         // column 0 row 1 
-         
+
+        // column 0 row 1 
 //https://www.youtube.com/watch?v=K3CenJ2bMok
-
 // https://www.youtube.com/watch?v=yLzfZhJTaa8
-
-
-ObservableList<List> observableList=FXCollections.observableArrayList();
-observableList.addAll(listOfProjectsNames);
-
-
-
-
-   ChoiceBox<String> choiceBox = new ChoiceBox<>();
-
-    
-       
-            for(List value: observableList){
-                  choiceBox.setItems(value);
-            }
-
-            gridPaneTop.add(choiceBox,0,1);
+// observable list/observable map+ listener 
+// http://docs.oracle.com/javafx/2/collections/jfxpub-collections.htm
+        print();
+//ObservableList<String> observableList=FXCollections.observableArrayList(listOfProjectsNames);
+        ObservableList<String> observableList = FXCollections.observableList(listOfProjectsNames);
+        ChoiceBox<String> choiceBox = new ChoiceBox<>();
+        choiceBox.setItems(observableList);
+        choiceBox.getSelectionModel().selectFirst(); // nie dzial nie wiadomo dlaczego 
+        gridPaneTop.add(choiceBox, 0, 1);
 
 //            
 //         
-     
-        
 //        // column 0-3 row 0        
 //        textSearchById = new Text("Search by Id");
 //        textSearchById.setFont(Font.font("Tahoma", FontWeight.NORMAL, 20));
@@ -435,6 +418,14 @@ observableList.addAll(listOfProjectsNames);
         formatter = new SimpleDateFormat("dd/MM/yyyy K:m a", Locale.ENGLISH);
         formatedDate = formatter.format(date);
         return formatedDate;
+    }
+
+    public void print() {
+        System.out.println("wywolanie z widoku");
+        for (String value : listOfProjectsNames) {
+            System.out.println("eeee");
+            System.out.println("--- " + value);
+        }
     }
 
     public void clearDataBeforeNextSearch() {

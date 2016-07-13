@@ -48,7 +48,7 @@ import java.util.logging.Logger;
 public class RedmineData {
 
     String uri = "https://redmine.jaggi.com.pl";
-    String apiAccessKey = "636b54544bdc9982bd11ca073d58956a809eb342";
+    String apiAccessKey = "";
     String projectKey = "ppm";
     Integer queryId = 12; // any before I set up query in Redmine --> id:12 (Search all)
     HttpClient httpClient;
@@ -59,27 +59,26 @@ public class RedmineData {
     List<Project> listOfProjectsFromRedmine;
     Issue issue;
     String exceptionMessage;
-    boolean isLoginAndPasswordCorrect=false;
+    boolean isLoginAndPasswordCorrect = false;
 
     public void logingIn(String login, String password) {
         try {
             exceptionMessage = "";
-            System.out.println("try: " + login + " " + password);          
+            System.out.println("try: " + login + " " + password);
             httpClient = createHttpClient_AcceptsUntrustedCerts();
 //             mgr = RedmineManagerFactory.createWithApiKey(uri, apiAccessKey);
 //             mgr = RedmineManagerFactory.createWithApiKey(uri, apiAccessKey, httpClient);
 
-         redmineManager = RedmineManagerFactory.createWithUserAuth( uri,  "karol.kolanczak", "karolek79",  httpClient);     
-//            mgr = RedmineManagerFactory.createWithUserAuth(uri, login, password, httpClient);
+            redmineManager = RedmineManagerFactory.createWithUserAuth(uri, login, password, httpClient);
 
             issueManager = redmineManager.getIssueManager();
-            issues = issueManager.getIssues(projectKey, queryId);   
+            issues = issueManager.getIssues(projectKey, queryId);
             projectManager = redmineManager.getProjectManager();
-            listOfProjectsFromRedmine=projectManager.getProjects();
-            
-            isLoginAndPasswordCorrect=true;
+            listOfProjectsFromRedmine = projectManager.getProjects();
+
+            isLoginAndPasswordCorrect = true;
             System.out.println("login and password correct");
-          
+
 //            return issues;
         } catch (NoSuchAlgorithmException e) {
             System.out.println("Inside class 'RedmineData': " + e);
@@ -88,10 +87,10 @@ public class RedmineData {
         } catch (KeyManagementException e) {
             System.out.println("Inside class 'RedmineData': " + e);
         } catch (RedmineAuthenticationException e) {
-            isLoginAndPasswordCorrect=false;
+            isLoginAndPasswordCorrect = false;
             exceptionMessage = "Login or password is not correct";
             System.out.println("Inside class 'RedmineData': " + e);
-            
+
         } catch (RedmineException e) {
             System.out.println("Inside class 'RedmineData': " + e);
         }
@@ -126,11 +125,11 @@ public class RedmineData {
         HttpClient httpClient = b.build();
         return httpClient;
     }
-     public List<Project> getProjectsFromRedmine(){           
-         System.out.println("22222"+listOfProjectsFromRedmine);
-            return listOfProjectsFromRedmine;
-      
+
+    public List<Project> getProjectsFromRedmine() {
+        return listOfProjectsFromRedmine;
     }
+
     public void printAll(List<Issue> issues) {
         for (Issue issueValue : issues) {
             System.out.println(issueValue);
